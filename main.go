@@ -1,9 +1,5 @@
 package main
 
-//ToDo: renew Token.
-// gofunction/thread that occasionally retrieves the /secret/tToken
-// checks to see if expires soon and renews.
-
 import (
   "bytes"
   "encoding/json"
