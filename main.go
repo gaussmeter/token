@@ -14,6 +14,7 @@ import (
   "log"
   "net/http"
   "os"
+  "time"
 )
 
 type token_auth struct {
@@ -21,7 +22,57 @@ type token_auth struct {
   Password string `json:"password"`
 }
 
+type token struct {
+  AccessToken string `json:"access_token"`
+  RefreshToken string `json:"refresh_token"`
+  TokenType string `json:"token_type"`
+  ExpiresIn int64 `json:"expires_in"`
+  CreatedAt int64 `json:"created_at"`
+
+}
+
+// Todo: clean this up...
+//  it "works for now" but
+//  in cases where the token is renewed, but fails to store, it could be lost. (retry post to config)
+//  also... capture/check/handle all the errors...
+func renewtToken() {
+  var token token
+  for {
+    tokenResponse, _ := http.Get("http://config:8443/secret/tToken")
+    responseBody, _ := ioutil.ReadAll(tokenResponse.Body)
+    _ = json.Unmarshal(responseBody, &token)
+    // 3888000 seconds = 45 Days (value of token.ExpiresIn as time of writing)
+    // 86400 seconds = 1 Day
+    // Renew token 7 days before ie expires.
+    renewAt := token.CreatedAt + token.ExpiresIn - (86400 * 7)
+    if time.Now().Unix() > renewAt {
+      message := map[string]interface{}{
+        "grant_type":    "refresh_token",
+        "client_id":     "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
+        "client_secret": "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3",
+        "refresh_token": token.RefreshToken,
+      }
+      messageBytes, _ := json.Marshal(message)
+      renewTokenResponse, err := http.Post("https://owner-api.teslamotors.com/oauth/token", "application/json", bytes.NewBuffer(messageBytes))
+      log.Printf("renew response code: %d", renewTokenResponse.StatusCode)
+      if err == nil && renewTokenResponse.StatusCode == http.StatusOK {
+        log.Printf("token renewed.")
+        renewedToken, _ := ioutil.ReadAll(renewTokenResponse.Body)
+        storedToken, err := http.Post("http://config:8443/secret/tToken", "text/html", bytes.NewBuffer(renewedToken))
+        if err == nil && storedToken.StatusCode == http.StatusOK {
+          log.Printf("token stored")
+        } else {
+          log.Printf("error: %s", err.Error())
+        }
+      }
+    }
+    //sleep until tomorrow.
+    time.Sleep(86400 * time.Second)
+  }
+}
+
 func main() {
+  go renewtToken()
 
   rtr := mux.NewRouter()
   rtr.HandleFunc("/tToken", func(w http.ResponseWriter, r *http.Request) {
