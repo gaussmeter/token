@@ -67,6 +67,7 @@ func renewtToken() {
         }
       }
     }
+    log.Printf("token expires in %d seconds", renewAt - time.Now().Unix())
     //sleep until tomorrow.
     time.Sleep(86400 * time.Second)
   }
