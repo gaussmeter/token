@@ -13,6 +13,11 @@ import (
   "time"
 )
 
+var (
+  client_id = "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384"
+  client_secret = "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3"
+)
+
 type token_auth struct {
   Email string    `json:"email"`
   Password string `json:"password"`
@@ -44,8 +49,8 @@ func renewtToken() {
     if time.Now().Unix() > renewAt {
       message := map[string]interface{}{
         "grant_type":    "refresh_token",
-        "client_id":     "81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
-        "client_secret": "c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3",
+        "client_id":     client_id,
+        "client_secret": client_secret,
         "refresh_token": token.RefreshToken,
       }
       messageBytes, _ := json.Marshal(message)
@@ -98,8 +103,8 @@ func main() {
     }
     message := map[string]interface{}{
       "grant_type":"password",
-      "client_id":"81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384",
-      "client_secret":"c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3",
+      "client_id": client_id,
+      "client_secret": client_secret,
       "email": t.Email,
       "password": t.Password,
     }
