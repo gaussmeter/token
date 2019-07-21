@@ -115,7 +115,6 @@ func main() {
     tokenJson, _ := ioutil.ReadAll(token.Body)
     fmt.Fprintf(w,"%s",tokenJson)
   } ).Methods("POST")
-  rtr.PathPrefix("/").Handler(http.FileServer(http.Dir("./static/")))
   loggedRouter := handlers.LoggingHandler(os.Stdout, rtr)
 
   log.Fatal(http.ListenAndServe(":9001", loggedRouter))
